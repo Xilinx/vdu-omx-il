@@ -103,6 +103,9 @@ include $(THIS)/exe_omx/project_codec.mk
 -include $(THIS)/conformance/project.mk
 -include $(THIS)/unittests.mk
 
+INSTALL_PATH ?= /usr/bin
+INCLUDE_INST_PATH ?= /usr/include
+
 .PHONY: clean
 clean:
 	$(Q)rm -rf $(BIN)
@@ -112,6 +115,13 @@ clean:
 distclean: clean
 	@echo "CLEAN $(EXTERNAL_LIB)"
 	$(Q)rm -rf $(EXTERNAL_LIB)
+
+install:
+	mkdir -p ${INSTALL_PATH}
+	mkdir -p ${INCLUDE_INST_PATH}/vdu-omx-il
+
+	install -m 0644 omx_header/*.h ${INCLUDE_INST_PATH}/vdu-omx-il
+	install -Dm 0755 bin/omx_decoder.exe ${INSTALL_PATH}/omx_decoder
 
 TARGETS: $(externals)
 true_all: $(TARGETS)
