@@ -59,6 +59,3 @@ bool UpdateDecodedPictureBuffer(AL_TDecSettings& settings, DecodedPictureBufferT
 Point<int> CreateOutputPosition(AL_TDecSettings settings);
 bool UpdateOutputPosition(AL_TDecSettings& settings, Point<int> position);
 
-int CreateInstanceId(AL_TDecSettings settings);
-bool UpdateInstanceId(AL_TDecSettings& settings, int instance);
-

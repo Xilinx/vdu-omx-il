@@ -22,29 +22,18 @@
 *
 ******************************************************************************/
 
-#include "mediatype_dummy.h"
+#pragma once
 
-using namespace std;
+#include "settings_interface.h"
 
-DummyMediatype::DummyMediatype() = default;
-DummyMediatype::~DummyMediatype() = default;
-
-void DummyMediatype::Reset()
+struct DummySettings final : SettingsInterface
 {
-}
+  DummySettings();
+  ~DummySettings() override;
 
-MediatypeInterface::ErrorType DummyMediatype::Get(string, void*) const
-{
-  return ErrorType::SUCCESS;
-}
-
-MediatypeInterface::ErrorType DummyMediatype::Set(string, void const*)
-{
-  return ErrorType::SUCCESS;
-}
-
-bool DummyMediatype::Check()
-{
-  return true;
-}
+  void Reset() override;
+  ErrorType Get(std::string, void*) const override;
+  ErrorType Set(std::string, void const*) override;
+  bool Check() override;
+};
 

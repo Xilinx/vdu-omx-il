@@ -26,7 +26,7 @@
 #include "module_interface.h"
 #include "device_dec_interface.h"
 #include "module_enums.h"
-#include "mediatype_dec_interface.h"
+#include "settings_dec_interface.h"
 
 #include <vector>
 #include <queue>
@@ -44,7 +44,7 @@ extern "C"
 
 struct DecModule final : ModuleInterface
 {
-  DecModule(std::shared_ptr<DecMediatypeInterface> media, std::shared_ptr<DecDeviceInterface> device, std::shared_ptr<AL_TAllocator> allocator);
+  DecModule(std::shared_ptr<DecSettingsInterface> media, std::shared_ptr<DecDeviceInterface> device, std::shared_ptr<AL_TAllocator> allocator);
   ~DecModule() override;
 
   void Free(void* buffer) override;
@@ -60,12 +60,13 @@ struct DecModule final : ModuleInterface
 
   ErrorType Start(bool shouldPrealloc) override;
   bool Stop() override;
+  ErrorType Restart() override;
 
   ErrorType SetDynamic(std::string index, void const* param) override;
   ErrorType GetDynamic(std::string index, void* param) override;
 
 private:
-  std::shared_ptr<DecMediatypeInterface> const media;
+  std::shared_ptr<DecSettingsInterface> const media;
   std::shared_ptr<DecDeviceInterface> device;
   std::shared_ptr<AL_TAllocator> allocator;
 
@@ -86,7 +87,7 @@ private:
   ThreadSafeMap<AL_TBuffer*, std::vector<AL_TSeiMetaData*>> displaySeis;
 
   AL_HDecoder decoder;
-  bool resolutionFoundAsBeenCalled;
+  bool resolutionFoundHasBeenCalled;
   Dimension<int> initialDimension;
 
   ErrorType CreateDecoder(bool shouldPrealloc);

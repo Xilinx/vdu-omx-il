@@ -30,7 +30,6 @@
 #include <iomanip>
 #include <queue>
 #include <map>
-#include <cassert>
 #include <stdexcept>
 #include <iostream>
 #include "lib_rtos/types.h"

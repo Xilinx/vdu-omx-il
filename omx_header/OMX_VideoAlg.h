@@ -1079,7 +1079,7 @@ typedef struct OMX_ALG_VIDEO_PARAM_LOOP_FILTER_BETA
  *
  * STRUCT MEMBERS:
  *  nSize         : Size of the structure in bytes
- *  nVersion      : OMX specification version information
+ *  nVersion      : OMXcation version information
  *  nPortIndex    : Port that this structure applies to
  *  nLoopFilterTc : Loop filter tc offset value
  */
@@ -1095,9 +1095,18 @@ typedef struct OMX_ALG_VIDEO_PARAM_LOOP_FILTER_TC
 typedef enum OMX_ALG_COLOR_FORMATTYPE
 {
   OMX_ALG_COLOR_FormatUnused = OMX_COLOR_FormatVendorStartUnused,
-  OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked,
-  OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked,
   OMX_ALG_COLOR_FormatL10bitPacked,
+  OMX_ALG_COLOR_FormatL10bit,
+  OMX_ALG_COLOR_FormatL12bit,
+  OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked,
+  OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit,
+  OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit,
+  OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked,
+  OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit,
+  OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit,
+  OMX_ALG_COLOR_FormatYUV444Planar8bit,
+  OMX_ALG_COLOR_FormatYUV444Planar10bit,
+  OMX_ALG_COLOR_FormatYUV444Planar12bit,
   OMX_ALG_COLOR_FormatMaxEnum = 0x7FFFFFFF,
 }OMX_ALG_COLOR_FORMATTYPE;
 

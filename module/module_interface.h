@@ -187,6 +187,7 @@ struct ModuleInterface
 
   virtual ErrorType Start(bool shouldPrealloc) = 0;
   virtual bool Stop() = 0;
+  virtual ErrorType Restart() = 0;
 
   virtual ErrorType SetDynamic(std::string index, void const* param) = 0;
   virtual ErrorType GetDynamic(std::string index, void* param) = 0;

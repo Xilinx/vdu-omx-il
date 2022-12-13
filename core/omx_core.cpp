@@ -125,7 +125,7 @@ static OMX_HANDLETYPE CreateComponent(const omx_comp_type* pComponent, char cons
   dlerror();
 
   using CreateComponentFuncPtr = add_pointer<OMX_ERRORTYPE(OMX_IN OMX_HANDLETYPE, OMX_IN OMX_STRING, OMX_IN OMX_STRING, OMX_IN OMX_PTR, OMX_IN OMX_CALLBACKTYPE*)>::type;
-  auto createFunction = reinterpret_cast<CreateComponentFuncPtr>(reinterpret_cast<uintptr_t>(dlsym(pComponent->pLibHandle, cFunctionName)));
+  auto createFunction = reinterpret_cast<CreateComponentFuncPtr>(reinterpret_cast<uintptr_t>(::dlsym(pComponent->pLibHandle, cFunctionName)));
   auto pErr = dlerror();
 
   if(pErr)

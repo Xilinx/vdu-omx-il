@@ -26,16 +26,16 @@
 #include <cmath>
 #include <cassert>
 #include <utility/round.h>
-#include "mediatype_dec_hevc.h"
-#include "mediatype_dec_itu.h"
-#include "mediatype_codec_hevc.h"
-#include "mediatype_codec_itu.h"
-#include "mediatype_checks.h"
+#include "settings_dec_hevc.h"
+#include "settings_dec_itu.h"
+#include "settings_codec_hevc.h"
+#include "settings_codec_itu.h"
+#include "settings_checks.h"
 #include "convert_module_soft_hevc.h"
 
 using namespace std;
 
-DecMediatypeHEVC::DecMediatypeHEVC(BufferContiguities bufferContiguities, BufferBytesAlignments bufferBytesAlignments, StrideAlignments strideAlignments)
+DecSettingsHEVC::DecSettingsHEVC(BufferContiguities bufferContiguities, BufferBytesAlignments bufferBytesAlignments, StrideAlignments strideAlignments)
 {
   this->bufferContiguities.input = bufferContiguities.input;
   this->bufferContiguities.output = bufferContiguities.output;
@@ -47,9 +47,9 @@ DecMediatypeHEVC::DecMediatypeHEVC(BufferContiguities bufferContiguities, Buffer
   Reset();
 }
 
-DecMediatypeHEVC::~DecMediatypeHEVC() = default;
+DecSettingsHEVC::~DecSettingsHEVC() = default;
 
-void DecMediatypeHEVC::Reset()
+void DecSettingsHEVC::Reset()
 {
   bufferHandles.input = BufferHandleType::BUFFER_HANDLE_CHAR_PTR;
   bufferHandles.output = BufferHandleType::BUFFER_HANDLE_CHAR_PTR;
@@ -74,6 +74,8 @@ void DecMediatypeHEVC::Reset()
   stream.iLevel = 10;
   stream.eProfile = AL_PROFILE_HEVC_MAIN;
   stream.eSequenceMode = AL_SM_PROGRESSIVE;
+
+  initialDisplayResolution = { -1, -1 };
 
   tier = 0;
   this->stride.horizontal = RoundUp(static_cast<int>(AL_Decoder_GetMinPitch(stream.tDim.iWidth, stream.iBitDepth, settings.eFBStorageMode)), strideAlignments.horizontal);
@@ -140,7 +142,7 @@ static ProfileLevel CreateProfileLevel(AL_TDecSettings settings, int tier)
   return IsHighTier(tier) ? CreateHEVCHighTierProfileLevel(stream.eProfile, stream.iLevel) : CreateHEVCMainTierProfileLevel(stream.eProfile, stream.iLevel);
 }
 
-MediatypeInterface::ErrorType DecMediatypeHEVC::Get(std::string index, void* settings) const
+SettingsInterface::ErrorType DecSettingsHEVC::Get(std::string index, void* settings) const
 {
   if(!settings)
     return BAD_PARAMETER;
@@ -280,12 +282,6 @@ MediatypeInterface::ErrorType DecMediatypeHEVC::Get(std::string index, void* set
     return SUCCESS;
   }
 
-  if(index == "SETTINGS_INDEX_INSTANCE_ID")
-  {
-    *(static_cast<int*>(settings)) = CreateInstanceId(this->settings);
-    return SUCCESS;
-  }
-
   return BAD_INDEX;
 }
 
@@ -318,7 +314,7 @@ static bool UpdateProfileLevel(AL_TDecSettings& settings, int& tier, ProfileLeve
   return true;
 }
 
-MediatypeInterface::ErrorType DecMediatypeHEVC::Set(std::string index, void const* settings)
+SettingsInterface::ErrorType DecSettingsHEVC::Set(std::string index, void const* settings)
 {
   if(!settings)
     return BAD_PARAMETER;
@@ -392,6 +388,10 @@ MediatypeInterface::ErrorType DecMediatypeHEVC::Set(std::string index, void cons
 
     if(!UpdateResolution(this->settings, this->stride, this->strideAlignments, resolution))
       return BAD_PARAMETER;
+
+    this->initialDisplayResolution.horizontal = resolution.dimension.horizontal;
+    this->initialDisplayResolution.vertical = resolution.dimension.vertical;
+
     return SUCCESS;
   }
 
@@ -425,33 +425,15 @@ MediatypeInterface::ErrorType DecMediatypeHEVC::Set(std::string index, void cons
     return SUCCESS;
   }
 
-  if(index == "SETTINGS_INDEX_INSTANCE_ID")
-  {
-    auto instance = *(static_cast<int const*>(settings));
-
-    if(!UpdateInstanceId(this->settings, instance))
-      return BAD_PARAMETER;
-    return SUCCESS;
-  }
-
   return BAD_INDEX;
 }
 
-bool DecMediatypeHEVC::Check()
+bool DecSettingsHEVC::Check()
 {
-  // Fix: remove this line and below block when a better fix is found
-  // This is a Gstreamer issue (not OMX) for allocation!
-  int tmp_height = settings.tStream.tDim.iHeight;
-  settings.tStream.tDim.iHeight = RoundUp(settings.tStream.tDim.iHeight, 16);
-
   if(AL_DecSettings_CheckValidity(&settings, stderr) != 0)
     return false;
 
   AL_DecSettings_CheckCoherency(&settings, stdout);
-
-  // Fix: remove this line and below block when a better fix is found
-  // This is a Gstreamer issue (not OMX) for allocation!
-  settings.tStream.tDim.iHeight = tmp_height;
 
   return true;
 }

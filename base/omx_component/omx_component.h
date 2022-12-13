@@ -27,7 +27,7 @@
 #include "omx_component_structs.h"
 #include "omx_component_interface.h"
 #include "module/module_interface.h"
-#include "module/mediatype_interface.h"
+#include "module/settings_interface.h"
 #include <utility/processor_fifo.h>
 #include "omx_buffer_handle.h"
 #include "omx_convert_omx_media.h"
@@ -77,7 +77,7 @@ struct OMXSei
 
 struct Component : public OMXComponentInterface
 {
-  Component(OMX_HANDLETYPE component, std::shared_ptr<MediatypeInterface> media, std::unique_ptr<ModuleInterface>&& module, std::unique_ptr<ExpertiseInterface>&& expertise, OMX_STRING name, OMX_STRING role);
+  Component(OMX_HANDLETYPE component, std::shared_ptr<SettingsInterface> media, std::unique_ptr<ModuleInterface>&& module, std::unique_ptr<ExpertiseInterface>&& expertise, OMX_STRING name, OMX_STRING role);
   ~Component() override;
   OMX_ERRORTYPE SendCommand(OMX_IN OMX_COMMANDTYPE cmd, OMX_IN OMX_U32 param, OMX_IN OMX_PTR data) override;
 
@@ -106,7 +106,7 @@ struct Component : public OMXComponentInterface
 
 protected:
   OMX_HANDLETYPE const component;
-  std::shared_ptr<MediatypeInterface> media;
+  std::shared_ptr<SettingsInterface> media;
   std::unique_ptr<ModuleInterface> module;
   std::unique_ptr<ExpertiseInterface> expertise;
   Port input;

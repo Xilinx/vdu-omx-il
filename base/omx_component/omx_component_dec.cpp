@@ -43,7 +43,7 @@ static DecModule& ToDecModule(ModuleInterface& module)
   return dynamic_cast<DecModule &>(module);
 }
 
-DecComponent::DecComponent(OMX_HANDLETYPE component, shared_ptr<MediatypeInterface> media, std::unique_ptr<DecModule>&& module, OMX_STRING name, OMX_STRING role, std::unique_ptr<ExpertiseInterface>&& expertise) :
+DecComponent::DecComponent(OMX_HANDLETYPE component, shared_ptr<SettingsInterface> media, std::unique_ptr<DecModule>&& module, OMX_STRING name, OMX_STRING role, std::unique_ptr<ExpertiseInterface>&& expertise) :
   Component{component, media, std::move(module), std::move(expertise), name, role},
   oldTimeStamp{-1},
   dataHasBeenPropagated{false}

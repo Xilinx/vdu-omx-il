@@ -76,6 +76,7 @@ struct Dimension
 
 typedef Dimension<int> Stride;
 typedef Dimension<int> StrideAlignments;
+typedef Dimension<int> InitialDisplayRes;
 
 struct Resolution
 {

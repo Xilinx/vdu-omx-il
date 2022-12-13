@@ -22,18 +22,58 @@
 *
 ******************************************************************************/
 
-#pragma once
+#include "settings_codec_itu.h"
+#include "settings_checks.h"
+#include <cassert>
 
-#include "buffer_handle_interface.h"
+using namespace std;
 
-struct SyncIpInterface
+vector<Format> CreateFormatsSupported(vector<ColorType> colors, vector<int> bitdepths)
 {
-  virtual ~SyncIpInterface() = 0;
+  vector<Format> formatsSupported;
 
-  virtual bool create() = 0;
-  virtual void destroy() = 0;
+  for(auto color : colors)
+  {
+    for(auto bitdepth : bitdepths)
+    {
+      Format format;
+      format.color = color;
+      format.bitdepth = bitdepth;
+      formatsSupported.push_back(format);
+    }
+  }
 
-  virtual void addBuffer(BufferHandleInterface* buffer) = 0;
-  virtual void enable() = 0;
-};
+  return formatsSupported;
+}
+
+void CreateFormatsSupportedMap(vector<ColorType> colors, vector<int> bitdepths, map<Format, vector<Format>>& mapFormats)
+{
+  // by default, all format only support their own format
+  for(auto color : colors)
+  {
+    for(auto bitdepth : bitdepths)
+    {
+      Format format;
+      format.color = color;
+      format.bitdepth = bitdepth;
+      mapFormats[format] = { format };
+    }
+  }
+}
+
+vector<Format> CreateFormatsSupportedByCurrent(Format current, map<Format, vector<Format>> formats)
+{
+  vector<Format> supported = formats[current];
+  assert(supported.size() > 0);
+  return supported;
+}
+
+bool UpdateBufferHandles(BufferHandles& current, BufferHandles bufferHandles)
+{
+  if(!CheckBufferHandles(bufferHandles))
+    return false;
+
+  current = bufferHandles;
+  return true;
+}
 

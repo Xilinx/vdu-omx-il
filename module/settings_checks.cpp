@@ -22,7 +22,7 @@
 *
 ******************************************************************************/
 
-#include "mediatype_checks.h"
+#include "settings_checks.h"
 
 using namespace std;
 

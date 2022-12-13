@@ -47,12 +47,12 @@ extern "C"
 
 using namespace std;
 
-DecModule::DecModule(shared_ptr<DecMediatypeInterface> media, shared_ptr<DecDeviceInterface> device, shared_ptr<AL_TAllocator> allocator) :
+DecModule::DecModule(shared_ptr<DecSettingsInterface> media, shared_ptr<DecDeviceInterface> device, shared_ptr<AL_TAllocator> allocator) :
   media{media},
   device{device},
   allocator{allocator},
   decoder{nullptr},
-  resolutionFoundAsBeenCalled{false},
+  resolutionFoundHasBeenCalled{false},
   initialDimension{-1, -1}
 {
   assert(this->media);
@@ -285,10 +285,10 @@ void DecModule::ResolutionFound(int bufferNumber, int bufferSize, AL_TStreamSett
 {
   (void)bufferNumber, (void)bufferSize, (void)crop;
 
-  if(resolutionFoundAsBeenCalled)
+  if(resolutionFoundHasBeenCalled)
     return;
 
-  resolutionFoundAsBeenCalled = true;
+  resolutionFoundHasBeenCalled = true;
   initialDimension.horizontal = settings.tDim.iWidth;
   initialDimension.vertical = settings.tDim.iHeight;
   media->settings.tStream = settings;
@@ -349,14 +349,6 @@ ModuleInterface::ErrorType DecModule::CreateDecoder(bool shouldPrealloc)
   if(inputParsed)
     decCallbacks.parsedSeiCB = { nullptr, nullptr };
 
-  // Fix: remove this line and below block when a better fix is found
-  // This is a Gstreamer issue (not OMX) for allocation!
-  int tmp_height = media->settings.tStream.tDim.iHeight;
-  {
-    if(shouldPrealloc)
-      media->settings.tStream.tDim.iHeight = RoundUp(media->settings.tStream.tDim.iHeight, 16);
-  }
-
   auto errorCode = AL_Decoder_Create(&decoder, channel, allocator.get(), &media->settings, &decCallbacks);
 
   if(AL_IS_ERROR_CODE(errorCode))
@@ -373,12 +365,14 @@ ModuleInterface::ErrorType DecModule::CreateDecoder(bool shouldPrealloc)
       DestroyDecoder();
       return ToModuleError(errorCode);
     }
-
-    // Fix remove this line when a better fix is found
-    // This is a Gstreamer issue (not OMX) for allocation!
-    media->settings.tStream.tDim.iHeight = tmp_height;
   }
 
+  if((media->initialDisplayResolution.vertical != -1) && (media->initialDisplayResolution.horizontal != -1))
+  {
+    // After the decoder has been created, configure initial resolution expected by GST again.
+    media->settings.tStream.tDim.iHeight = media->initialDisplayResolution.vertical;
+    media->settings.tStream.tDim.iWidth = media->initialDisplayResolution.horizontal;
+  }
   return SUCCESS;
 }
 
@@ -393,10 +387,25 @@ bool DecModule::DestroyDecoder()
   AL_Decoder_Destroy(decoder);
   device->Deinit();
   decoder = nullptr;
-  resolutionFoundAsBeenCalled = false;
+  resolutionFoundHasBeenCalled = false;
   initialDimension = { -1, -1 };
 
   return true;
+}
+
+ModuleInterface::ErrorType DecModule::Restart()
+{
+  if(!decoder)
+  {
+    LOG_ERROR("Decoder isn't created");
+    return UNDEFINED;
+  }
+
+  AL_Decoder_Destroy(decoder);
+  device->Deinit();
+  decoder = nullptr;
+
+  return CreateDecoder(true);
 }
 
 void DecModule::Free(void* buffer)
@@ -682,10 +691,21 @@ static AL_TMetaData* CreatePixMapMeta(AL_TStreamSettings const& streamSettings, 
 
   if(AL_IsMonochrome(fourCC))
     return (AL_TMetaData*)meta;
-  assert(AL_IsSemiPlanar(fourCC) && "Unsupported chroma format");
-  AL_TPlane planeUV = { 0, stride * sliceHeight, stride };
-  success = AL_PixMapMetaData_AddPlane(meta, planeUV, AL_PLANE_UV);
-  assert(success);
+  assert((AL_IsSemiPlanar(fourCC) || (AL_GetChromaMode(fourCC) == AL_CHROMA_4_4_4 && AL_GetChromaOrder(fourCC) == AL_C_ORDER_U_V))
+          && "Unsupported chroma format");
+  if(AL_IsSemiPlanar(fourCC)){
+    AL_TPlane planeUV = { 0, stride * sliceHeight, stride };
+    success = AL_PixMapMetaData_AddPlane(meta, planeUV, AL_PLANE_UV);
+    assert(success);
+  } else {
+    // Only 4_4_4 with U_V order as asserted before
+    AL_TPlane planeU = { 0, stride * sliceHeight, stride };
+    success = AL_PixMapMetaData_AddPlane(meta, planeU, AL_PLANE_U);
+    assert(success);
+    AL_TPlane planeV = { 0, stride * sliceHeight * 2, stride };
+    success = AL_PixMapMetaData_AddPlane(meta, planeV, AL_PLANE_V);
+    assert(success);
+  }
   return (AL_TMetaData*)meta;
 }
 

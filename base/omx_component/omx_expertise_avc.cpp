@@ -29,7 +29,7 @@ using namespace std;
 
 ExpertiseAVC::~ExpertiseAVC() = default;
 
-static OMX_ERRORTYPE SetMediaProfileLevel(OMX_VIDEO_AVCPROFILETYPE const& profile, OMX_VIDEO_AVCLEVELTYPE const& level, std::shared_ptr<MediatypeInterface> media)
+static OMX_ERRORTYPE SetMediaProfileLevel(OMX_VIDEO_AVCPROFILETYPE const& profile, OMX_VIDEO_AVCLEVELTYPE const& level, std::shared_ptr<SettingsInterface> media)
 {
   ProfileLevel p;
   p.profile.avc = ConvertOMXToMediaAVCProfileLevel(profile, level).profile.avc;
@@ -40,12 +40,12 @@ static OMX_ERRORTYPE SetMediaProfileLevel(OMX_VIDEO_AVCPROFILETYPE const& profil
   return OMX_ErrorNone;
 }
 
-static OMX_ERRORTYPE SetMediaGop(OMX_U32 bFrames, OMX_U32 pFrames, std::shared_ptr<MediatypeInterface> media)
+static OMX_ERRORTYPE SetMediaGop(OMX_U32 bFrames, OMX_U32 pFrames, std::shared_ptr<SettingsInterface> media)
 {
   Gop gop;
   auto ret = media->Get(SETTINGS_INDEX_GROUP_OF_PICTURES, &gop);
 
-  if(ret == MediatypeInterface::BAD_INDEX)
+  if(ret == SettingsInterface::BAD_INDEX)
     return OMX_ErrorUnsupportedIndex;
 
   gop.b = ConvertOMXToMediaBFrames(bFrames, pFrames);
@@ -56,7 +56,7 @@ static OMX_ERRORTYPE SetMediaGop(OMX_U32 bFrames, OMX_U32 pFrames, std::shared_p
   return OMX_ErrorNone;
 }
 
-static OMX_ERRORTYPE SetMediaEntropyCoding(OMX_BOOL entropyCoding, std::shared_ptr<MediatypeInterface> media)
+static OMX_ERRORTYPE SetMediaEntropyCoding(OMX_BOOL entropyCoding, std::shared_ptr<SettingsInterface> media)
 {
   EntropyCodingType e = ConvertOMXToMediaEntropyCoding(entropyCoding);
 
@@ -65,7 +65,7 @@ static OMX_ERRORTYPE SetMediaEntropyCoding(OMX_BOOL entropyCoding, std::shared_p
   return OMX_ErrorNone;
 }
 
-static OMX_ERRORTYPE SetMediaConstrainedIntraPrediction(OMX_BOOL constrainedIntraPrediction, std::shared_ptr<MediatypeInterface> media)
+static OMX_ERRORTYPE SetMediaConstrainedIntraPrediction(OMX_BOOL constrainedIntraPrediction, std::shared_ptr<SettingsInterface> media)
 {
   bool b = ConvertOMXToMediaBool(constrainedIntraPrediction);
 
@@ -74,7 +74,7 @@ static OMX_ERRORTYPE SetMediaConstrainedIntraPrediction(OMX_BOOL constrainedIntr
   return OMX_ErrorNone;
 }
 
-static OMX_ERRORTYPE SetMediaLoopFilter(OMX_VIDEO_AVCLOOPFILTERTYPE const& loopFilter, std::shared_ptr<MediatypeInterface> media)
+static OMX_ERRORTYPE SetMediaLoopFilter(OMX_VIDEO_AVCLOOPFILTERTYPE const& loopFilter, std::shared_ptr<SettingsInterface> media)
 {
   LoopFilterType l = ConvertOMXToMediaAVCLoopFilter(loopFilter);
 
@@ -83,7 +83,7 @@ static OMX_ERRORTYPE SetMediaLoopFilter(OMX_VIDEO_AVCLOOPFILTERTYPE const& loopF
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE ExpertiseAVC::GetProfileLevelSupported(OMX_PTR param, std::shared_ptr<MediatypeInterface> media)
+OMX_ERRORTYPE ExpertiseAVC::GetProfileLevelSupported(OMX_PTR param, std::shared_ptr<SettingsInterface> media)
 {
   vector<ProfileLevel> supported;
   auto ret = media->Get(SETTINGS_INDEX_PROFILES_LEVELS_SUPPORTED, &supported);
@@ -99,7 +99,7 @@ OMX_ERRORTYPE ExpertiseAVC::GetProfileLevelSupported(OMX_PTR param, std::shared_
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE ExpertiseAVC::GetProfileLevel(OMX_PTR param, Port const& port, std::shared_ptr<MediatypeInterface> media)
+OMX_ERRORTYPE ExpertiseAVC::GetProfileLevel(OMX_PTR param, Port const& port, std::shared_ptr<SettingsInterface> media)
 {
   ProfileLevel profileLevel;
   auto ret = media->Get(SETTINGS_INDEX_PROFILE_LEVEL, &profileLevel);
@@ -111,7 +111,7 @@ OMX_ERRORTYPE ExpertiseAVC::GetProfileLevel(OMX_PTR param, Port const& port, std
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE ExpertiseAVC::SetProfileLevel(OMX_PTR param, Port const& port, std::shared_ptr<MediatypeInterface> media)
+OMX_ERRORTYPE ExpertiseAVC::SetProfileLevel(OMX_PTR param, Port const& port, std::shared_ptr<SettingsInterface> media)
 {
   OMX_VIDEO_PARAM_PROFILELEVELTYPE rollback;
   GetProfileLevel(&rollback, port, media);
@@ -130,7 +130,7 @@ OMX_ERRORTYPE ExpertiseAVC::SetProfileLevel(OMX_PTR param, Port const& port, std
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE ExpertiseAVC::GetExpertise(OMX_PTR param, Port const& port, std::shared_ptr<MediatypeInterface> media)
+OMX_ERRORTYPE ExpertiseAVC::GetExpertise(OMX_PTR param, Port const& port, std::shared_ptr<SettingsInterface> media)
 {
   ProfileLevel profileLevel;
   Gop gop;
@@ -139,10 +139,10 @@ OMX_ERRORTYPE ExpertiseAVC::GetExpertise(OMX_PTR param, Port const& port, std::s
   LoopFilterType loopFilter;
   auto ret = media->Get(SETTINGS_INDEX_PROFILE_LEVEL, &profileLevel);
   OMX_CHECK_MEDIA_GET(ret);
-  bool bGop = (media->Get(SETTINGS_INDEX_GROUP_OF_PICTURES, &gop) == MediatypeInterface::SUCCESS);
-  bool bEntropyCoding = (media->Get(SETTINGS_INDEX_ENTROPY_CODING, &entropyCoding) == MediatypeInterface::SUCCESS);
-  bool bIntraPred = (media->Get(SETTINGS_INDEX_CONSTRAINED_INTRA_PREDICTION, &isConstrainedIntraPrediction) == MediatypeInterface::SUCCESS);
-  bool bLoopFilter = (media->Get(SETTINGS_INDEX_LOOP_FILTER, &loopFilter) == MediatypeInterface::SUCCESS);
+  bool bGop = (media->Get(SETTINGS_INDEX_GROUP_OF_PICTURES, &gop) == SettingsInterface::SUCCESS);
+  bool bEntropyCoding = (media->Get(SETTINGS_INDEX_ENTROPY_CODING, &entropyCoding) == SettingsInterface::SUCCESS);
+  bool bIntraPred = (media->Get(SETTINGS_INDEX_CONSTRAINED_INTRA_PREDICTION, &isConstrainedIntraPrediction) == SettingsInterface::SUCCESS);
+  bool bLoopFilter = (media->Get(SETTINGS_INDEX_LOOP_FILTER, &loopFilter) == SettingsInterface::SUCCESS);
   auto& avc = *(OMX_VIDEO_PARAM_AVCTYPE*)param;
   avc.nPortIndex = port.index;
   avc.nBFrames = bGop ? ConvertMediaToOMXBFrames(gop) : 0;
@@ -171,7 +171,7 @@ OMX_ERRORTYPE ExpertiseAVC::GetExpertise(OMX_PTR param, Port const& port, std::s
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE ExpertiseAVC::SetExpertise(OMX_PTR param, Port const& port, std::shared_ptr<MediatypeInterface> media)
+OMX_ERRORTYPE ExpertiseAVC::SetExpertise(OMX_PTR param, Port const& port, std::shared_ptr<SettingsInterface> media)
 {
   OMX_VIDEO_PARAM_AVCTYPE rollback;
   GetExpertise(&rollback, port, media);

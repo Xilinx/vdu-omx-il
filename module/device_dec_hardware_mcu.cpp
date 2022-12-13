@@ -30,13 +30,18 @@ extern "C"
 #include "lib_decode/DecSchedulerMcu.h"
 }
 
-DecDeviceHardwareMcu::DecDeviceHardwareMcu() = default;
+using namespace std;
+
+DecDeviceHardwareMcu::DecDeviceHardwareMcu(string device) :
+  device(device)
+{
+}
+
 DecDeviceHardwareMcu::~DecDeviceHardwareMcu() = default;
 
 AL_IDecScheduler* DecDeviceHardwareMcu::Init()
 {
-  auto constexpr deviceFile = "/dev/allegroDecodeIP";
-  scheduler = AL_DecSchedulerMcu_Create(AL_GetHardwareDriver(), deviceFile);
+  scheduler = AL_DecSchedulerMcu_Create(AL_GetHardwareDriver(), device.c_str());
   return scheduler;
 }
 

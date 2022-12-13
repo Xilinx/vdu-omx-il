@@ -209,11 +209,8 @@ static std::string const SETTINGS_INDEX_OUTPUT_POSITION {
 static std::string const SETTINGS_INDEX_START_CODE_BYTES_ALIGNMENT {
   "SETTINGS_INDEX_START_CODE_BYTES_ALIGNMENT"
 };
-static std::string const SETTINGS_INDEX_INSTANCE_ID {
-  "SETTINGS_INDEX_INSTANCE_ID"
-};
 
-struct MediatypeInterface
+struct SettingsInterface
 {
   enum ErrorType
   {
@@ -225,7 +222,7 @@ struct MediatypeInterface
     MAX,
   };
 
-  virtual ~MediatypeInterface() = 0;
+  virtual ~SettingsInterface() = 0;
   virtual ErrorType Get(std::string index, void* settings) const = 0;
   virtual ErrorType Set(std::string index, void const* settings) = 0;
   virtual void Reset() = 0;
@@ -233,25 +230,25 @@ struct MediatypeInterface
 };
 
 #include <map>
-static std::map<MediatypeInterface::ErrorType, std::string> ToStringErrorSettings
+static std::map<SettingsInterface::ErrorType, std::string> ToStringErrorSettings
 {
   {
-    MediatypeInterface::SUCCESS, "SUCCESS"
+    SettingsInterface::SUCCESS, "SUCCESS"
   },
   {
-    MediatypeInterface::BAD_INDEX, "BAD_INDEX"
+    SettingsInterface::BAD_INDEX, "BAD_INDEX"
   },
   {
-    MediatypeInterface::BAD_PARAMETER, "BAD_PARAMETER"
+    SettingsInterface::BAD_PARAMETER, "BAD_PARAMETER"
   },
   {
-    MediatypeInterface::NOT_IMPLEMENTED, "NOT_IMPLEMENTED"
+    SettingsInterface::NOT_IMPLEMENTED, "NOT_IMPLEMENTED"
   },
   {
-    MediatypeInterface::UNDEFINED, "UNDEFINED"
+    SettingsInterface::UNDEFINED, "UNDEFINED"
   },
   {
-    MediatypeInterface::MAX, "MAX"
+    SettingsInterface::MAX, "MAX"
   },
 };
 

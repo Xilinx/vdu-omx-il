@@ -72,6 +72,10 @@ extern "C"
 
 using namespace std;
 
+
+#define returnsFormatIfSupported(format) isFormatSupported(static_cast<OMX_COLOR_FORMATTYPE>(format)) ? \
+                                                           static_cast<OMX_COLOR_FORMATTYPE>(format)
+
 using EventType = int;
 
 struct EventData
@@ -175,7 +179,6 @@ struct Settings
   Codec codec = Codec::HEVC;
   bool bDMAIn = false;
   bool bDMAOut = false;
-  int instance_id = -1;
   OMX_ALG_BUFFER_MODE eDMAIn = OMX_ALG_BUF_NORMAL;
   OMX_ALG_BUFFER_MODE eDMAOut = OMX_ALG_BUF_NORMAL;
   OMX_COLOR_FORMATTYPE chroma = OMX_COLOR_FormatYUV420SemiPlanar;
@@ -227,24 +230,6 @@ static void Usage(CommandLineParser& opt, char* ExeName)
     cerr << "  " << opt.descs[command] << endl;
 }
 
-bool setChroma(string user_chroma, OMX_COLOR_FORMATTYPE* chroma)
-{
-  if(user_chroma == "y800")
-    *chroma = OMX_COLOR_FormatL8;
-  else if(user_chroma == "xv10")
-    *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL10bitPacked);
-  else if(user_chroma == "nv12")
-    *chroma = OMX_COLOR_FormatYUV420SemiPlanar;
-  else if(user_chroma == "nv16")
-    *chroma = OMX_COLOR_FormatYUV422SemiPlanar;
-  else if(user_chroma == "xv15")
-    *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked);
-  else if(user_chroma == "xv20")
-    *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
-  else
-    return false;
-  return true;
-}
 
 void getExpectedSeparator(stringstream& ss, char expectedSep)
 {
@@ -302,7 +287,7 @@ void parsePreAllocArgs(Settings* settings, string& toParse)
   getExpectedSeparator(ss, ':');
   ss >> settings->level;
 
-  if(!setChroma(chroma, &settings->chroma))
+  if(!setChroma(chroma, &settings->chroma) || !isFormatSupported(settings->chroma))
     throw runtime_error("wrong prealloc chroma format");
 
   if(!setSequence(seq, &settings->sequencePicture))
@@ -323,12 +308,12 @@ void parseCommandLine(int argc, char** argv, Application& app)
   auto opt = CommandLineParser();
   bool help = false;
   opt.addString("input_file", &input_file, "Input file");
-  opt.addInt("--instance_id", &settings.instance_id, "decoder instance id");
   opt.addFlag("--help", &help, "Show this help");
   opt.addFlag("--hevc,-hevc", &settings.codecImplem, "load HEVC decoder (default)", Codec::HEVC);
   opt.addFlag("--avc,-avc", &settings.codecImplem, "load AVC decoder", Codec::AVC);
+
   opt.addFlag("--hevc-hard,-hevc-hard", &settings.codecImplem, "Use hard hevc decoder", Codec::HEVC_HARD);
-  opt.addFlag("--avc-hard,-hevc-hard", &settings.codecImplem, "Use hard avc decoder", Codec::AVC_HARD);
+  opt.addFlag("--avc-hard,-avc-hard", &settings.codecImplem, "Use hard avc decoder", Codec::AVC_HARD);
   opt.addString("--out,-o", &output_file, "Output compressed file name");
   opt.addOption("--dma-in,-dma-in", [&](string) {
     settings.bDMAIn = true;
@@ -357,13 +342,15 @@ void parseCommandLine(int argc, char** argv, Application& app)
     exit(0);
   }
 
-  bool isHevc = settings.codecImplem == Codec::HEVC;
-  isHevc = isHevc || settings.codecImplem == Codec::HEVC_HARD;
+  Codec codec = Codec::HEVC;
 
-  if(isHevc)
-    settings.codec = Codec::HEVC;
-  else
-    settings.codec = Codec::AVC;
+  if(settings.codecImplem == Codec::AVC)
+    codec = Codec::AVC;
+
+  if(settings.codecImplem == Codec::AVC_HARD)
+    codec = Codec::AVC;
+
+  settings.codec = codec;
 
   if(!prealloc_args.empty())
   {
@@ -693,17 +680,20 @@ OMX_ERRORTYPE onOutputBufferAvailable(OMX_HANDLETYPE hComponent, OMX_PTR pAppDat
       auto videoDef = param.format.video;
       auto stride = videoDef.nStride;
       auto sliceHeight = videoDef.nSliceHeight;
-      auto coef = is422(videoDef.eColorFormat) ? 1 : 2;
+      auto div_coef = is420(videoDef.eColorFormat) ? 2 : 1;
+      auto mul_coef = is444(videoDef.eColorFormat) ? 2 : 1;
       auto height = videoDef.nFrameHeight;
-      auto row_size = is10bits(videoDef.eColorFormat) ? (((videoDef.nFrameWidth + 2) / 3) * 4) : videoDef.nFrameWidth;
+      auto row_size = is8bits(videoDef.eColorFormat) ? videoDef.nFrameWidth :
+          (((videoDef.nFrameWidth + 2) / 3) * 4);
 
       /* luma */
       for(auto h = 0; h < (int)height; h++)
         outfile.write(&data[h * stride], row_size);
 
       /* chroma */
-      for(auto h = sliceHeight; h < sliceHeight + height / coef; h++)
-        outfile.write(&data[h * stride], row_size);
+      if(!is400(videoDef.eColorFormat))
+        for(auto h = sliceHeight; h < sliceHeight + height / div_coef * mul_coef; h++)
+          outfile.write(&data[h * stride], row_size);
 
       outfile.flush();
     }
@@ -810,7 +800,11 @@ OMX_ERRORTYPE setSequencePicture(Application& app)
 
 OMX_ERRORTYPE setPreallocParameters(Application& app)
 {
-  OMX_ERRORTYPE error = setProfileAndLevel(app);
+  OMX_ERRORTYPE error = OMX_ErrorNone;
+
+  {
+    error = setProfileAndLevel(app);
+  }
 
   if(error != OMX_ErrorNone)
     return error;
@@ -833,24 +827,16 @@ OMX_ERRORTYPE setPreallocParameters(Application& app)
   return OMX_ErrorNone;
 }
 
-OMX_ERRORTYPE setInstanceId(Application const& app)
-{
-  OMX_ALG_PARAM_INSTANCE_ID instance;
-  InitHeader(instance);
-  instance.nInstanceId = app.settings.instance_id;
-  return OMX_SetParameter(app.hDecoder, static_cast<OMX_INDEXTYPE>(OMX_ALG_IndexParamInstanceId), &instance);
-}
-
 OMX_ERRORTYPE setWorstCaseParameters(Application& app)
 {
   Settings& settings = app.settings;
-  settings.width = 7680;
-  settings.height = 4320;
+  settings.width = 3840;
+  settings.height = 2160;
 
   if(settings.codec == Codec::HEVC)
   {
     settings.profile = static_cast<OMX_VIDEO_HEVCPROFILETYPE>(OMX_ALG_VIDEO_HEVCProfileMain422_10);
-    settings.level = static_cast<OMX_VIDEO_HEVCLEVELTYPE>(OMX_ALG_VIDEO_HEVCHighTierLevel6);
+    settings.level = static_cast<OMX_VIDEO_HEVCLEVELTYPE>(OMX_ALG_VIDEO_HEVCMainTierLevel62);
   }
   else
   {
@@ -859,7 +845,20 @@ OMX_ERRORTYPE setWorstCaseParameters(Application& app)
   }
 
   settings.framerate = 1 << 16;
-  settings.chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
+
+  settings.chroma = returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar12bit)           :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar10bit)           :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar8bit)            :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit)       :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit)       :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked) :
+                    returnsFormatIfSupported(    OMX_COLOR_FormatYUV422SemiPlanar)            :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit)       :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit)       :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked) :
+               static_cast<OMX_COLOR_FORMATTYPE>(OMX_COLOR_FormatYUV420SemiPlanar);
+  
+
   settings.sequencePicture = OMX_ALG_SEQUENCE_PICTURE_UNKNOWN;
 
   return setPreallocParameters(app);
@@ -941,8 +940,6 @@ static OMX_ERRORTYPE configureComponent(Application& app)
     app.disableEvent.wait();
     outputPortDisabled = true;
   }
-
-  setInstanceId(app);
 
   InitHeader(paramPort);
   paramPort.nPortIndex = 1;

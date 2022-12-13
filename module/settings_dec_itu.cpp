@@ -24,8 +24,8 @@
 
 #include <cassert>
 #include <utility/round.h>
-#include "mediatype_dec_itu.h"
-#include "mediatype_checks.h"
+#include "settings_dec_itu.h"
+#include "settings_checks.h"
 #include "convert_module_soft.h"
 #include "convert_module_soft_dec.h"
 
@@ -139,6 +139,7 @@ static int RawAllocationSize(Stride stride, AL_EChromaMode eChromaMode)
   case AL_CHROMA_MONO: return size;
   case AL_CHROMA_4_2_0: return (3 * size) / 2;
   case AL_CHROMA_4_2_2: return 2 * size;
+  case AL_CHROMA_4_4_4: return 3 * size;
   default: return -1;
   }
 }
@@ -199,20 +200,6 @@ bool UpdateOutputPosition(AL_TDecSettings& settings, Point<int> position)
 {
   settings.tOutputPosition.iX = position.x;
   settings.tOutputPosition.iY = position.y;
-  return true;
-}
-
-int CreateInstanceId(AL_TDecSettings settings)
-{
-  return settings.iInstanceId;
-}
-
-bool UpdateInstanceId(AL_TDecSettings& settings, int instance)
-{
-  if(instance < -1)
-    return false;
-
-  settings.iInstanceId = instance;
   return true;
 }
 

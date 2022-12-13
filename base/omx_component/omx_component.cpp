@@ -204,7 +204,7 @@ static void AssociateSpecVersion(OMX_VERSIONTYPE& spec)
   spec.s.nStep = OMX_VERSION_STEP;
 }
 
-static BufferCounts MinBufferCounts(shared_ptr<MediatypeInterface> media)
+static BufferCounts MinBufferCounts(shared_ptr<SettingsInterface> media)
 {
   BufferCounts bufferCounts {};
   assert(media);
@@ -218,7 +218,7 @@ static void SetPortsParam(OMX_PORT_PARAM_TYPE& portParams)
   portParams.nStartPortNumber = VIDEO_START_PORT;
 }
 
-Component::Component(OMX_HANDLETYPE component, shared_ptr<MediatypeInterface> media, unique_ptr<ModuleInterface>&& module, std::unique_ptr<ExpertiseInterface>&& expertise, OMX_STRING name, OMX_STRING role) :
+Component::Component(OMX_HANDLETYPE component, shared_ptr<SettingsInterface> media, unique_ptr<ModuleInterface>&& module, std::unique_ptr<ExpertiseInterface>&& expertise, OMX_STRING name, OMX_STRING role) :
   component{component},
   media{media},
   module{move(module)},
@@ -741,11 +741,6 @@ OMX_ERRORTYPE Component::GetParameter(OMX_IN OMX_INDEXTYPE index, OMX_INOUT OMX_
     auto prealloc = static_cast<OMX_ALG_PARAM_PREALLOCATION*>(param);
     return ConstructPreallocation(*prealloc, this->shouldPrealloc);
   }
-  case OMX_ALG_IndexParamInstanceId:
-  {
-    auto instance = static_cast<OMX_ALG_PARAM_INSTANCE_ID*>(param);
-    return ConstructInstanceId(*instance, media);
-  }
   case OMX_ALG_IndexParamVideoDecodedPictureBuffer:
   {
     auto port = getCurrentPort(param);
@@ -1122,11 +1117,6 @@ OMX_ERRORTYPE Component::SetParameter(OMX_IN OMX_INDEXTYPE index, OMX_IN OMX_PTR
     auto p = static_cast<OMX_ALG_PARAM_PREALLOCATION*>(param);
     this->shouldPrealloc = (p->bDisablePreallocation == OMX_FALSE);
     return OMX_ErrorNone;
-  }
-  case OMX_ALG_IndexParamInstanceId:
-  {
-    auto instance = static_cast<OMX_ALG_PARAM_INSTANCE_ID*>(param);
-    return SetInstanceId(*instance, media);
   }
   case OMX_ALG_IndexParamVideoDecodedPictureBuffer:
   {
@@ -1877,9 +1867,7 @@ static bool isFlushingRequired(OMX_STATETYPE prevState, OMX_STATETYPE newState)
     OMXChecker::CheckStateTransition(prevState, newState);
     auto transientState = GetTransientState(prevState, newState);
 
-    if(transientState == TransientState::ExecutingToPause || transientState == TransientState::ExecutingToIdle || newState == OMX_StateInvalid)
-      return true;
-    return false;
+    return transientState == TransientState::ExecutingToPause || transientState == TransientState::ExecutingToIdle || newState == OMX_StateInvalid;
   }
   catch(OMX_ERRORTYPE& e)
   {
@@ -1956,8 +1944,13 @@ void Component::TreatFlushCommand(Task task)
 
   LOG_IMPORTANT(string { "Flush port: " } +to_string(index));
 
-  if(module->Stop())
-    module->Start(true);
+  // Restart component
+  auto error = module->Restart();
+
+  if(error)
+  {
+    LOG_ERROR("Restart did not complete clean");
+  }
 
   FlushEosHandles();
 
@@ -1983,8 +1976,13 @@ void Component::TreatDisablePortCommand(Task task)
 
   if(shouldPrealloc && shouldFireEventPortSettingsChanges && (state == OMX_StateExecuting || state == OMX_StatePause))
   {
-    if(module->Stop())
-      module->Start(true);
+    // Restart component
+    auto error = module->Restart();
+
+    if(error)
+    {
+      LOG_ERROR("Restart did not complete clean");
+    }
 
     if(shouldFireEventPortSettingsChanges)
     {
@@ -2256,7 +2254,7 @@ void Component::TreatDynamicCommand(Task task)
   {
     Resolution resolution {};
     auto ret = media->Get(SETTINGS_INDEX_RESOLUTION, &resolution);
-    assert(ret == MediatypeInterface::SUCCESS);
+    assert(ret == SettingsInterface::SUCCESS);
     auto drc = static_cast<OMX_ALG_VIDEO_CONFIG_NOTIFY_RESOLUTION_CHANGE*>(opt);
     resolution.dimension.horizontal = drc->nWidth;
     resolution.dimension.vertical = drc->nHeight;

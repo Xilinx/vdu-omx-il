@@ -22,7 +22,29 @@
 *
 ******************************************************************************/
 
-#include "mediatype_interface.h"
+#include "settings_dummy.h"
 
-MediatypeInterface::~MediatypeInterface() = default;
+using namespace std;
+
+DummySettings::DummySettings() = default;
+DummySettings::~DummySettings() = default;
+
+void DummySettings::Reset()
+{
+}
+
+SettingsInterface::ErrorType DummySettings::Get(string, void*) const
+{
+  return ErrorType::SUCCESS;
+}
+
+SettingsInterface::ErrorType DummySettings::Set(string, void const*)
+{
+  return ErrorType::SUCCESS;
+}
+
+bool DummySettings::Check()
+{
+  return true;
+}
 

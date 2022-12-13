@@ -33,8 +33,13 @@ EXTERNAL_SRC?=
 EXTERNAL_LIB?=
 
 
+
+
 ENABLE_VCU?=1
-ENABLE_MCU?=1
+ifndef ENABLE_OMX_MCU
+	ENABLE_MCU?=1
+endif
+ENABLE_OMX_MCU?=${ENABLE_MCU}
 ENABLE_64BIT?=1
 ENABLE_DMA_COPY_ENC?=0
 
@@ -54,18 +59,18 @@ STRIP:=$(CROSS_COMPILE)strip
 SIZE:=$(CROSS_COMPILE)size
 
 ifeq ($(ENABLE_DMA_COPY_ENC), 1)
-  CFLAGS+=-DAL_ENABLE_DMA_COPY_ENC
+	CFLAGS+=-DAL_ENABLE_DMA_COPY_ENC
 endif
 
 TARGET?=$(shell $(CC) -dumpmachine)
 
 ifeq ($(ENABLE_64BIT),0)
-  # force 32 bit compilation
-  ifneq (,$(findstring x86_64,$(TARGET)))
-    CFLAGS+=-m32
-    LDFLAGS+=-m32
-    TARGET:=i686-linux-gnu
-  endif
+# force 32 bit compilation
+	ifneq (,$(findstring x86_64,$(TARGET)))
+		CFLAGS+=-m32
+		LDFLAGS+=-m32
+		TARGET:=i686-linux-gnu
+	endif
 endif
 
 include $(THIS)/builder.mk

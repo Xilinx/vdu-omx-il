@@ -37,41 +37,60 @@ OMX_BOOL ConvertMediaToOMXBool(bool boolean)
 
 OMX_COLOR_FORMATTYPE ConvertMediaToOMXColor(ColorType color, int bitdepth)
 {
-  switch(color)
+  switch(bitdepth)
   {
-  case ColorType::COLOR_400:
-  {
-    if(bitdepth == 8)
-      return OMX_COLOR_FormatL8;
-
-    if(bitdepth == 10)
-      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL10bitPacked);
-
-    throw invalid_argument("bitdepth");
-  }
-  case ColorType::COLOR_420:
-  {
-    if(bitdepth == 8)
-      return OMX_COLOR_FormatYUV420SemiPlanar;
-
-    if(bitdepth == 10)
-      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked);
-
-    throw invalid_argument("bitdepth");
-  }
-  case ColorType::COLOR_422:
-  {
-    if(bitdepth == 8)
-      return OMX_COLOR_FormatYUV422SemiPlanar;
-
-    if(bitdepth == 10)
-      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
-
-    throw invalid_argument("bitdepth");
-  }
-  case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
+  case 8:
+    switch(color)
+    {
+    case ColorType::COLOR_400:
+        return OMX_COLOR_FormatL8;
+    case ColorType::COLOR_420:
+        return OMX_COLOR_FormatYUV420SemiPlanar;
+    case ColorType::COLOR_422:
+        return OMX_COLOR_FormatYUV422SemiPlanar;
+    case ColorType::COLOR_444:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar8bit);
+    case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
+    default:
+      throw invalid_argument("color");
+    }
+    break;
+  
+  case 10:
+    switch(color)
+    {
+    case ColorType::COLOR_400:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL10bitPacked);
+    case ColorType::COLOR_420:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked);
+    case ColorType::COLOR_422:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
+    case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
+    default:
+      throw invalid_argument("color");
+    }
+    break;
+  
+  case 12:
+    switch(color)
+    {
+    case ColorType::COLOR_400:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL12bit);
+    case ColorType::COLOR_420:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit);
+    case ColorType::COLOR_422:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit);
+    case ColorType::COLOR_444:
+        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar12bit);
+    case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
+    default:
+      throw invalid_argument("color");
+    }
+    break;
+  
   default:
-    throw invalid_argument("color");
+    throw invalid_argument("bitdepth");
+    break;
   }
 }
 
@@ -82,6 +101,7 @@ OMX_VIDEO_CODINGTYPE ConvertMediaToOMXCompression(CompressionType compression)
   case CompressionType::COMPRESSION_UNUSED: return OMX_VIDEO_CodingUnused;
   case CompressionType::COMPRESSION_MAX_ENUM: return OMX_VIDEO_CodingMax;
   case CompressionType::COMPRESSION_AVC: return OMX_VIDEO_CodingAVC;
+  case CompressionType::COMPRESSION_MJPEG: return OMX_VIDEO_CodingMJPEG;
   case CompressionType::COMPRESSION_VP9: return static_cast<OMX_VIDEO_CODINGTYPE>(OMX_ALG_VIDEO_CodingVP9);
   case CompressionType::COMPRESSION_HEVC: return static_cast<OMX_VIDEO_CODINGTYPE>(OMX_ALG_VIDEO_CodingHEVC);
   default:
@@ -117,6 +137,7 @@ CompressionType ConvertOMXToMediaCompression(OMX_VIDEO_CODINGTYPE coding)
   {
   case OMX_VIDEO_CodingUnused: return CompressionType::COMPRESSION_UNUSED;
   case OMX_VIDEO_CodingAVC: return CompressionType::COMPRESSION_AVC;
+  case OMX_VIDEO_CodingMJPEG: return CompressionType::COMPRESSION_MJPEG;
   case OMX_ALG_VIDEO_CodingHEVC: return CompressionType::COMPRESSION_HEVC;
   case OMX_ALG_VIDEO_CodingVP9: return CompressionType::COMPRESSION_VP9;
   case OMX_VIDEO_CodingMax: return CompressionType::COMPRESSION_MAX_ENUM;
@@ -133,13 +154,27 @@ ColorType ConvertOMXToMediaColor(OMX_COLOR_FORMATTYPE format)
   {
   case OMX_COLOR_FormatL8:
   case OMX_ALG_COLOR_FormatL10bitPacked:
+  case OMX_ALG_COLOR_FormatL10bit:
+  case OMX_ALG_COLOR_FormatL12bit:
     return ColorType::COLOR_400;
+
   case OMX_COLOR_FormatYUV420SemiPlanar:
   case OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked:
+  case OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit:
+  case OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit:
     return ColorType::COLOR_420;
+
   case OMX_COLOR_FormatYUV422SemiPlanar:
   case OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked:
+  case OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit:
+  case OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit:
     return ColorType::COLOR_422;
+
+  case OMX_ALG_COLOR_FormatYUV444Planar8bit:
+  case OMX_ALG_COLOR_FormatYUV444Planar10bit:
+  case OMX_ALG_COLOR_FormatYUV444Planar12bit:
+    return ColorType::COLOR_444;
+
   case OMX_COLOR_FormatMax: return ColorType::COLOR_MAX_ENUM;
   default:
     throw invalid_argument("format");
@@ -155,11 +190,21 @@ int ConvertOMXToMediaBitdepth(OMX_COLOR_FORMATTYPE format)
   case OMX_COLOR_FormatL8:
   case OMX_COLOR_FormatYUV420SemiPlanar:
   case OMX_COLOR_FormatYUV422SemiPlanar:
+  case OMX_ALG_COLOR_FormatYUV444Planar8bit:
     return 8;
   case OMX_ALG_COLOR_FormatL10bitPacked:
   case OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked:
   case OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked:
+  case OMX_ALG_COLOR_FormatL10bit:
+  case OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit:
+  case OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit:
+  case OMX_ALG_COLOR_FormatYUV444Planar10bit:
     return 10;
+  case OMX_ALG_COLOR_FormatL12bit:
+  case OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit:
+  case OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit:
+  case OMX_ALG_COLOR_FormatYUV444Planar12bit:
+    return 12;
   case OMX_COLOR_FormatUnused: return 0; // XXX
   default:
     throw invalid_argument("color");

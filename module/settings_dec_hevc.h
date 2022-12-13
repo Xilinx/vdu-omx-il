@@ -24,14 +24,14 @@
 
 #pragma once
 
-#include "mediatype_dec_interface.h"
+#include "settings_dec_interface.h"
 
 #include <vector>
 
-struct DecMediatypeHEVC final : DecMediatypeInterface
+struct DecSettingsHEVC final : DecSettingsInterface
 {
-  DecMediatypeHEVC(BufferContiguities bufferContiguities, BufferBytesAlignments bufferBytesAlignments, StrideAlignments strideAlignments);
-  ~DecMediatypeHEVC() override;
+  DecSettingsHEVC(BufferContiguities bufferContiguities, BufferBytesAlignments bufferBytesAlignments, StrideAlignments strideAlignments);
+  ~DecSettingsHEVC() override;
 
   ErrorType Get(std::string index, void* settings) const override;
   ErrorType Set(std::string index, void const* settings) override;

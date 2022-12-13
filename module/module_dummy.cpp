@@ -91,6 +91,11 @@ ModuleInterface::ErrorType DummyModule::Start(bool)
   return SUCCESS;
 }
 
+ModuleInterface::ErrorType DummyModule::Restart()
+{
+  return SUCCESS;
+}
+
 ModuleInterface::ErrorType DummyModule::SetDynamic(std::string index, void const* param)
 {
   (void)index;

@@ -41,6 +41,7 @@ struct DummyModule final : ModuleInterface
 
   ErrorType Start(bool) override;
   bool Stop() override;
+  ErrorType Restart() override;
 
   ErrorType SetDynamic(std::string index, void const* param) override;
   ErrorType GetDynamic(std::string index, void* param) override;

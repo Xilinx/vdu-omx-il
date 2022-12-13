@@ -25,10 +25,11 @@
 #pragma once
 
 #include "device_dec_interface.h"
+#include <string>
 
 struct DecDeviceHardwareMcu final : DecDeviceInterface
 {
-  DecDeviceHardwareMcu();
+  DecDeviceHardwareMcu(std::string device);
   ~DecDeviceHardwareMcu() override;
 
   AL_IDecScheduler* Init() override;
@@ -37,6 +38,7 @@ struct DecDeviceHardwareMcu final : DecDeviceInterface
   BufferBytesAlignments GetBufferBytesAlignments() const override;
 
 private:
+  std::string const device;
   AL_IDecScheduler* scheduler {};
 };
 

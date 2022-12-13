@@ -22,25 +22,34 @@
 *
 ******************************************************************************/
 
-#pragma once
+#include "settings_codec_avc.h"
+#include "convert_module_soft_avc.h"
 
-#include "mediatype_interface.h"
-#include "module_structs.h"
+using namespace std;
 
-extern "C"
+vector<ProfileLevel> CreateAVCProfileLevelSupported(vector<AVCProfileType> profiles, vector<int> levels)
 {
-#include <lib_decode/lib_decode.h>
+  vector<ProfileLevel> plSupported;
+
+  for(auto profile : profiles)
+  {
+    for(auto level : levels)
+    {
+      ProfileLevel pl;
+      pl.profile.avc = profile;
+      pl.level = level;
+      plSupported.push_back(pl);
+    }
+  }
+
+  return plSupported;
 }
 
-struct DecMediatypeInterface : MediatypeInterface
+ProfileLevel CreateAVCProfileLevel(AL_EProfile profile, int level)
 {
-  virtual ~DecMediatypeInterface() override = default;
-
-  virtual void Reset() override = 0;
-  virtual ErrorType Get(std::string index, void* settings) const override = 0;
-  virtual ErrorType Set(std::string index, void const* settings) override = 0;
-
-  AL_TDecSettings settings;
-  Stride stride;
-};
+  ProfileLevel pl;
+  pl.profile.avc = ConvertSoftToModuleAVCProfile(profile);
+  pl.level = level;
+  return pl;
+}
 

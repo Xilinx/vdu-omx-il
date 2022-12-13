@@ -24,7 +24,7 @@
 
 #include "base/omx_component/omx_component_dec.h"
 #include "base/omx_component/omx_expertise_hevc.h"
-#include "module/mediatype_dec_hevc.h"
+#include "module/settings_dec_hevc.h"
 #include "module/module_dec.h"
 
 #include "module/device_dec_hardware_mcu.h"
@@ -41,8 +41,8 @@ extern "C"
 #include <lib_fpga/DmaAlloc.h>
 }
 
-static char const* ALLOC_DEVICE_DEC_NAME = "/dev/allegroDecodeIP";
-static AL_TAllocator* createDmaAlloc(string deviceName)
+static char const* DEVICE_DEC_NAME = "/dev/allegroDecodeIP";
+static AL_TAllocator* createDmaAlloc(string const deviceName)
 {
   auto alloc = AL_DmaAlloc_Create(deviceName.c_str());
 
@@ -71,20 +71,22 @@ static StrideAlignments constexpr STRIDE_ALIGNMENTS_HARDWARE
 };
 
 #include "base/omx_component/omx_expertise_avc.h"
-#include "module/mediatype_dec_avc.h"
+#include "module/settings_dec_avc.h"
 
 static DecComponent* GenerateAvcComponentHardware(OMX_HANDLETYPE hComponent, OMX_STRING cComponentName, OMX_STRING cRole)
 {
-  shared_ptr<DecMediatypeAVC> media {
-    new DecMediatypeAVC {
+  shared_ptr<DecSettingsAVC> media {
+    new DecSettingsAVC {
       BUFFER_CONTIGUITIES_HARDWARE, BUFFER_BYTES_ALIGNMENTS_HARDWARE, STRIDE_ALIGNMENTS_HARDWARE
     }
   };
   shared_ptr<DecDeviceHardwareMcu> device {
-    new DecDeviceHardwareMcu {}
+    new DecDeviceHardwareMcu {
+      string(DEVICE_DEC_NAME)
+    }
   };
   shared_ptr<AL_TAllocator> allocator {
-    createDmaAlloc(ALLOC_DEVICE_DEC_NAME), [](AL_TAllocator* allocator) {
+    createDmaAlloc(DEVICE_DEC_NAME), [](AL_TAllocator* allocator) {
       AL_Allocator_Destroy(allocator);
     }
   };
@@ -103,16 +105,18 @@ static DecComponent* GenerateAvcComponentHardware(OMX_HANDLETYPE hComponent, OMX
 
 static DecComponent* GenerateHevcComponentHardware(OMX_HANDLETYPE hComponent, OMX_STRING cComponentName, OMX_STRING cRole)
 {
-  shared_ptr<DecMediatypeHEVC> media {
-    new DecMediatypeHEVC {
+  shared_ptr<DecSettingsHEVC> media {
+    new DecSettingsHEVC {
       BUFFER_CONTIGUITIES_HARDWARE, BUFFER_BYTES_ALIGNMENTS_HARDWARE, STRIDE_ALIGNMENTS_HARDWARE
     }
   };
   shared_ptr<DecDeviceHardwareMcu> device {
-    new DecDeviceHardwareMcu {}
+    new DecDeviceHardwareMcu {
+      string(DEVICE_DEC_NAME)
+    }
   };
   shared_ptr<AL_TAllocator> allocator {
-    createDmaAlloc(ALLOC_DEVICE_DEC_NAME), [](AL_TAllocator* allocator) {
+    createDmaAlloc(DEVICE_DEC_NAME), [](AL_TAllocator* allocator) {
       AL_Allocator_Destroy(allocator);
     }
   };
