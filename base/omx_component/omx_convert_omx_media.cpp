@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015-2022 Allegro DVT2
+* Copyright (C) 2015-2023 Allegro DVT2
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -43,51 +43,54 @@ OMX_COLOR_FORMATTYPE ConvertMediaToOMXColor(ColorType color, int bitdepth)
     switch(color)
     {
     case ColorType::COLOR_400:
-        return OMX_COLOR_FormatL8;
+      return OMX_COLOR_FormatL8;
     case ColorType::COLOR_420:
-        return OMX_COLOR_FormatYUV420SemiPlanar;
+      return OMX_COLOR_FormatYUV420SemiPlanar;
     case ColorType::COLOR_422:
-        return OMX_COLOR_FormatYUV422SemiPlanar;
+      return OMX_COLOR_FormatYUV422SemiPlanar;
     case ColorType::COLOR_444:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar8bit);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar8bit);
     case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
     default:
       throw invalid_argument("color");
     }
+
     break;
-  
+
   case 10:
     switch(color)
     {
     case ColorType::COLOR_400:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL10bitPacked);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL10bitPacked);
     case ColorType::COLOR_420:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked);
     case ColorType::COLOR_422:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked);
     case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
     default:
       throw invalid_argument("color");
     }
+
     break;
-  
+
   case 12:
     switch(color)
     {
     case ColorType::COLOR_400:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL12bit);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL12bit);
     case ColorType::COLOR_420:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit);
     case ColorType::COLOR_422:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit);
     case ColorType::COLOR_444:
-        return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar12bit);
+      return static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar12bit);
     case ColorType::COLOR_MAX_ENUM: return OMX_COLOR_FormatMax;
     default:
       throw invalid_argument("color");
     }
+
     break;
-  
+
   default:
     throw invalid_argument("bitdepth");
     break;

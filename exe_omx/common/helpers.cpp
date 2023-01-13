@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015-2022 Allegro DVT2
+* Copyright (C) 2015-2023 Allegro DVT2
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,6 @@ void Buffer_UnmapData(char* data, size_t zSize, bool use_dmabuf)
   munmap(data, zSize);
 }
 
-
 bool setChroma(std::string user_chroma, OMX_COLOR_FORMATTYPE* chroma)
 {
   if(user_chroma == "y800")
@@ -97,7 +96,7 @@ bool setChroma(std::string user_chroma, OMX_COLOR_FORMATTYPE* chroma)
     *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit);
   else if(user_chroma == "i4al")
     *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatYUV444Planar10bit);
-  
+
   else if(user_chroma == "y012")
     *chroma = static_cast<OMX_COLOR_FORMATTYPE>(OMX_ALG_COLOR_FormatL12bit);
   else if(user_chroma == "p012")
@@ -111,7 +110,11 @@ bool setChroma(std::string user_chroma, OMX_COLOR_FORMATTYPE* chroma)
   return true;
 }
 
-extern "C" bool setChromaWrapper(char* user_chroma, OMX_COLOR_FORMATTYPE* chroma){
-  std::string user_chroma_string{user_chroma};
+extern "C" bool setChromaWrapper(char* user_chroma, OMX_COLOR_FORMATTYPE* chroma)
+{
+  std::string user_chroma_string {
+    user_chroma
+  };
   return setChroma(user_chroma_string, chroma);
 }
+

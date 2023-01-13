@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* Copyright (C) 2015-2022 Allegro DVT2
+* Copyright (C) 2015-2023 Allegro DVT2
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -72,9 +72,8 @@ extern "C"
 
 using namespace std;
 
-
 #define returnsFormatIfSupported(format) isFormatSupported(static_cast<OMX_COLOR_FORMATTYPE>(format)) ? \
-                                                           static_cast<OMX_COLOR_FORMATTYPE>(format)
+  static_cast<OMX_COLOR_FORMATTYPE>(format)
 
 using EventType = int;
 
@@ -172,6 +171,7 @@ struct ErrorEventData : EventData
 
 static OMX_U32 inportIndex = 0;
 static OMX_U32 outportIndex = 1;
+static const string deviceName = string("/dev/allegroDecodeIP");
 
 struct Settings
 {
@@ -229,7 +229,6 @@ static void Usage(CommandLineParser& opt, char* ExeName)
   for(auto& command: opt.displayOrder)
     cerr << "  " << opt.descs[command] << endl;
 }
-
 
 void getExpectedSeparator(stringstream& ss, char expectedSep)
 {
@@ -684,7 +683,7 @@ OMX_ERRORTYPE onOutputBufferAvailable(OMX_HANDLETYPE hComponent, OMX_PTR pAppDat
       auto mul_coef = is444(videoDef.eColorFormat) ? 2 : 1;
       auto height = videoDef.nFrameHeight;
       auto row_size = is8bits(videoDef.eColorFormat) ? videoDef.nFrameWidth :
-          (((videoDef.nFrameWidth + 2) / 3) * 4);
+                      (((videoDef.nFrameWidth + 2) / 3) * 4);
 
       /* luma */
       for(auto h = 0; h < (int)height; h++)
@@ -846,18 +845,8 @@ OMX_ERRORTYPE setWorstCaseParameters(Application& app)
 
   settings.framerate = 1 << 16;
 
-  settings.chroma = returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar12bit)           :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar10bit)           :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar8bit)            :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit)       :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit)       :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked) :
-                    returnsFormatIfSupported(    OMX_COLOR_FormatYUV422SemiPlanar)            :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit)       :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit)       :
-                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked) :
-               static_cast<OMX_COLOR_FORMATTYPE>(OMX_COLOR_FormatYUV420SemiPlanar);
-  
+  settings.chroma = returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar12bit) :
+                    returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar10bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV444Planar8bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar12bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV422SemiPlanar10bitPacked) : returnsFormatIfSupported(OMX_COLOR_FormatYUV422SemiPlanar) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar12bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bit) : returnsFormatIfSupported(OMX_ALG_COLOR_FormatYUV420SemiPlanar10bitPacked) : static_cast<OMX_COLOR_FORMATTYPE>(OMX_COLOR_FormatYUV420SemiPlanar);
 
   settings.sequencePicture = OMX_ALG_SEQUENCE_PICTURE_UNKNOWN;
 
@@ -1123,7 +1112,19 @@ static OMX_ERRORTYPE safeMain(int argc, char** argv)
   videoDecoderCallbacks.EmptyBufferDone = onInputBufferAvailable;
   videoDecoderCallbacks.FillBufferDone = onOutputBufferAvailable;
 
-  OMX_CALL(OMX_GetHandle(&app.hDecoder, (OMX_STRING)component.c_str(), &app, const_cast<OMX_CALLBACKTYPE*>(&videoDecoderCallbacks)));
+  OMX_ALG_COREINDEXTYPE coreType = OMX_ALG_CoreIndexUnused;
+  OMX_PTR coreSettings;
+
+  struct OMX_ALG_CORE_DEVICE device;
+  InitHeader(device);
+  device.cDevice = strdup(deviceName.c_str());
+  auto freecDevice = scopeExit([&]() {
+    free(device.cDevice);
+  });
+  coreSettings = &device;
+  coreType = OMX_ALG_CoreIndexDevice;
+
+  OMX_CALL(OMX_ALG_GetHandle(&app.hDecoder, (OMX_STRING)component.c_str(), &app, const_cast<OMX_CALLBACKTYPE*>(&videoDecoderCallbacks), coreType, coreSettings));
   auto scopeHandle = scopeExit([&]() {
     OMX_FreeHandle(app.hDecoder);
   });
@@ -1138,8 +1139,7 @@ static OMX_ERRORTYPE safeMain(int argc, char** argv)
 
   if(app.settings.bDMAIn || app.settings.bDMAOut)
   {
-    auto constexpr deviceName = "/dev/allegroDecodeIP";
-    app.pAllocator = AL_DmaAlloc_Create(deviceName);
+    app.pAllocator = AL_DmaAlloc_Create(deviceName.c_str());
 
     if(!app.pAllocator)
       throw runtime_error(string("Couldn't create dma allocator (using ") + deviceName + string(")"));

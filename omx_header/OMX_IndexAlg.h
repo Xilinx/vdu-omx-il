@@ -102,9 +102,9 @@ typedef enum OMX_ALG_INDEXTYPE
   OMX_ALG_IndexParamVideoPictureTimingSEI,                      /**< reference: OMX_ALG_VIDEO_PARAM_PICTURE_TIMING_SEI */
   OMX_ALG_IndexParamVideoRecoveryPointSEI,                      /**< reference: OMX_ALG_VIDEO_PARAM_RECOVERY_POINT_SEI */
   OMX_ALG_IndexParamVideoMasteringDisplayColourVolumeSEI,       /**< reference: OMX_ALG_VIDEO_PARAM_MASTERING_DISPLAY_COLOUR_VOLUME_SEI */
-  OMX_ALG_IndexParamVideoContentLightLevelSEI,                  /**< reference: OMX_ALG_VIDEO_PARAM_CONTENT_LIGHT_LEVEL_SEI */  
-  OMX_ALG_IndexParamVideoAlternativeTransferCharacteristicsSEI, /**< reference: OMX_ALG_VIDEO_PARAM_ALTERNATIVE_TRANSFER_CHARACTERISTICS_SEI */  
-  OMX_ALG_IndexParamVideoST209410SEI,                           /**< reference: OMX_ALG_VIDEO_PARAM_ST2094_10_SEI */ 
+  OMX_ALG_IndexParamVideoContentLightLevelSEI,                  /**< reference: OMX_ALG_VIDEO_PARAM_CONTENT_LIGHT_LEVEL_SEI */
+  OMX_ALG_IndexParamVideoAlternativeTransferCharacteristicsSEI, /**< reference: OMX_ALG_VIDEO_PARAM_ALTERNATIVE_TRANSFER_CHARACTERISTICS_SEI */
+  OMX_ALG_IndexParamVideoST209410SEI,                           /**< reference: OMX_ALG_VIDEO_PARAM_ST2094_10_SEI */
   OMX_ALG_IndexParamVideoST209440SEI,                           /**< reference: OMX_ALG_VIDEO_PARAM_ST2094_40_SEI */
   OMX_ALG_IndexParamVideoRateControlPlugin,                     /**< reference: OMX_ALG_VIDEO_PARAM_RATE_CONTROL_PLUGIN */
   OMX_ALG_IndexParamVideoUniformSliceType,                      /**< reference: OMX_ALG_VIDEO_PARAM_UNIFORM_SLICE_TYPE */
@@ -140,7 +140,7 @@ typedef enum OMX_ALG_INDEXTYPE
   OMX_ALG_IndexParamCommonSequencePictureModeQuerySupported, /**< reference: OMX_ALG_COMMON_PARAM_SEQUENCE_PICTURE_MODE */
 
   OMX_ALG_IndexMaxEnum = 0x7FFFFFFF,
-} OMX_ALG_INDEXTYPE;
+}OMX_ALG_INDEXTYPE;
 
 #ifdef __cplusplus
 }
