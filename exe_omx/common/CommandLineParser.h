@@ -449,7 +449,7 @@ public:
       }
 
       if(num_opt == 0)
-        throw std::runtime_error("You need to call setAvanced on an existing option");
+        throw std::runtime_error("You need to call setAdvanced on an existing option");
     }
     else
       throw std::runtime_error("You can't set a positional argument as advanced as it would change the place of all the other positional arguments.");

@@ -25,7 +25,6 @@
 #include "module_dec.h"
 #include <cmath>
 #include <cassert>
-#include <unistd.h> // close fd
 #include <algorithm>
 #include <utility/round.h>
 #include <utility/logger.h>
@@ -320,10 +319,14 @@ void DecModule::ParsedSuffixSei(int type, uint8_t* payload, int size)
 
 void DecModule::Error(AL_ERR error)
 {
-  LOG_ERROR(ToStringDecodeError(error));
+  if(AL_IS_WARNING_CODE(error))
+    LOG_WARNING(ToStringDecodeError(error));
 
   if(AL_IS_ERROR_CODE(error))
+  {
+    LOG_ERROR(ToStringDecodeError(error));
     callbacks.event(Callbacks::Event::ERROR, (void*)ToModuleError(error));
+  }
 }
 
 ModuleInterface::ErrorType DecModule::CreateDecoder(bool shouldPrealloc)
@@ -445,7 +448,6 @@ void DecModule::FreeDMA(int fd)
   {
     auto handle = allocatedDMA.Pop(fd);
     AL_Allocator_Free(allocator.get(), handle);
-    close(fd);
   }
 }
 
@@ -692,12 +694,16 @@ static AL_TMetaData* CreatePixMapMeta(AL_TStreamSettings const& streamSettings, 
   if(AL_IsMonochrome(fourCC))
     return (AL_TMetaData*)meta;
   assert((AL_IsSemiPlanar(fourCC) || (AL_GetChromaMode(fourCC) == AL_CHROMA_4_4_4 && AL_GetChromaOrder(fourCC) == AL_C_ORDER_U_V))
-          && "Unsupported chroma format");
-  if(AL_IsSemiPlanar(fourCC)){
+         && "Unsupported chroma format");
+
+  if(AL_IsSemiPlanar(fourCC))
+  {
     AL_TPlane planeUV = { 0, stride * sliceHeight, stride };
     success = AL_PixMapMetaData_AddPlane(meta, planeUV, AL_PLANE_UV);
     assert(success);
-  } else {
+  }
+  else
+  {
     // Only 4_4_4 with U_V order as asserted before
     AL_TPlane planeU = { 0, stride * sliceHeight, stride };
     success = AL_PixMapMetaData_AddPlane(meta, planeU, AL_PLANE_U);
