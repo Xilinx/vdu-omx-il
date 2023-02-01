@@ -171,7 +171,6 @@ struct ErrorEventData : EventData
 
 static OMX_U32 inportIndex = 0;
 static OMX_U32 outportIndex = 1;
-static const string deviceName = string("/dev/allegroDecodeIP");
 
 struct Settings
 {
@@ -190,6 +189,7 @@ struct Settings
   OMX_ALG_SEQUENCE_PICTURE_MODE sequencePicture = OMX_ALG_SEQUENCE_PICTURE_FRAME;
   bool hasPrealloc = false;
   bool enableSubframe = false;
+  string deviceName = "/dev/allegroDecodeIP0";
 };
 
 struct Application
@@ -326,6 +326,7 @@ void parseCommandLine(int argc, char** argv, Application& app)
   opt.addString("--prealloc-args", &prealloc_args, "Specify the stream dimension: 1920x1080:unkwn:nv12:omx-profile-value:omx-level-value");
   opt.addFlag("--subframe", &settings.enableSubframe, "Use the subframe latency mode");
   opt.addFlag("--print-sei", &print_sei, "Print SEI on stdout");
+  opt.addString("--device,-d", &settings.deviceName, "Specify the decoder device");
 
   if(argc < 2)
   {
@@ -1117,7 +1118,7 @@ static OMX_ERRORTYPE safeMain(int argc, char** argv)
 
   struct OMX_ALG_CORE_DEVICE device;
   InitHeader(device);
-  device.cDevice = strdup(deviceName.c_str());
+  device.cDevice = strdup(app.settings.deviceName.c_str());
   auto freecDevice = scopeExit([&]() {
     free(device.cDevice);
   });
@@ -1139,10 +1140,10 @@ static OMX_ERRORTYPE safeMain(int argc, char** argv)
 
   if(app.settings.bDMAIn || app.settings.bDMAOut)
   {
-    app.pAllocator = AL_DmaAlloc_Create(deviceName.c_str());
+    app.pAllocator = AL_DmaAlloc_Create(app.settings.deviceName.c_str());
 
     if(!app.pAllocator)
-      throw runtime_error(string("Couldn't create dma allocator (using ") + deviceName + string(")"));
+      throw runtime_error(string("Couldn't create dma allocator (using ") + app.settings.deviceName.c_str() + string(")"));
   }
 
   auto scopeAlloc = scopeExit([&]() {
